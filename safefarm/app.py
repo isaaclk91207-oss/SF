@@ -1,7 +1,159 @@
 """SafeFarm Myanmar - Flood Damage Assessment"""
 
 import streamlit as st
+from PIL import Image
 from config import get_string, REGIONS, CROPS, GROWTH_STAGES, CLASS_COLORS
+from utils.image import validate_image, preprocess_image, get_image_info
+from model.inference import get_classifier, predict_image
+def render_model_status():
+    """Show model status in sidebar."""
+    classifier = get_classifier()
+    info = classifier.get_model_info()
+    with st.sidebar:
+        st.markdown("### Model Status")
+        if info["status"] == "demo":
+            st.warning(f"⚠️ {t('model_demo')}")
+        else:
+            st.success(f"✅ Model: {info['name']}")
+            st.info(f"Device: {info['device']}")
+
+def render_image_upload():
+    """Render image upload section."""
+    st.subheader(f"📷 {t('upload_photo')}")
+    
+    uploaded_file = st.file_uploader(
+        t("upload_photo"),
+        type=["jpg", "jpeg", "png"],
+        label_visibility="collapsed"
+    )
+    
+    if uploaded_file is not None:
+        # Validate image
+        validation = validate_image(uploaded_file)
+        
+        if not validation["valid"]:
+            st.error(f"❌ {validation['error']}")
+            return None
+        
+        # Show warning if any
+        if validation["warning"]:
+            st.warning(f"⚠️ {validation['warning']}")
+        
+        # Open and display image
+        image = Image.open(uploaded_file)
+        st.session_state.uploaded_image = image
+        
+        # Get image info
+        info = get_image_info(image)
+        
+        # Display image and info
+        col_img, col_info = st.columns([2, 1])
+        
+        with col_img:
+            st.image(image, caption=uploaded_file.name, use_column_width=True)
+        
+        with col_info:
+            st.markdown("**Image Info:**")
+            st.text(f"Size: {info['width']}x{info['height']}")
+            st.text(f"Mode: {info['mode']}")
+            st.text(f"Format: {info['format']}")
+        
+        # Preprocess preview
+        processed = preprocess_image(image)
+        st.session_state.processed_image = processed
+        
+        with st.expander("🔍 Preprocessed Image (224x224)"):
+            st.image(processed, caption="Model Input", width=200)
+        
+        return image
+
+    return None
+
+def render_result_card(prediction):
+    """Render result card with prediction."""
+    st.subheader(f"📊 {t('result_title')}")
+    
+    if prediction is None:
+        st.info("Upload an image and click 'Assess Damage' to see results")
+        return
+    
+    # Get damage level and color
+    damage_class = prediction["class"]
+    confidence = prediction["confidence"]
+    color = CLASS_COLORS.get(damage_class, "#9E9E9E")
+    
+    # Demo mode warning
+    if prediction.get("is_demo", False):
+        st.warning(f"⚠️ {t('model_demo')}")
+    
+    # Main result card
+    st.markdown(f"""
+    <div style="
+        border: 2px solid {color};
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        background-color: {color}15;
+    ">
+        <h3 style="color: {color}; margin: 0;">
+            {t('damage_level')}: {t(damage_class)}
+        </h3>
+        <p style="font-size: 24px; margin: 10px 0;">
+            {t('confidence')}: {confidence:.1%}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Probability breakdown
+    st.markdown("**Probability Breakdown:**")
+    probs = prediction["probabilities"]
+    
+    # Create columns for each class
+    cols = st.columns(4)
+    for i, (cls, prob) in enumerate(probs.items()):
+        with cols[i]:
+            st.metric(
+                label=t(cls),
+                value=f"{prob:.1%}"
+            )
+    
+    # Recommendations based on damage level
+    st.markdown("---")
+    st.markdown("**Recommended Actions:**")
+    
+    if damage_class == "high":
+        st.error(f"🔴 {t('rec_urgent')}")
+        st.error(f"🔴 {t('rec_emergency_food')}")
+    elif damage_class == "medium":
+        st.warning(f"🟠 {t('rec_replanting')}")
+        st.warning(f"🟠 {t('rec_insurance')}")
+    elif damage_class == "low":
+        st.success(f"🟢 {t('rec_monitoring')}")
+    else:
+        st.info(f"⚪ {t('rec_verify')}")
+
+def main():
+    """Main app entry point."""
+    render_header()
+    render_model_status()
+    
+    col_upload, col_result = st.columns([1, 1])
+    
+    with col_upload:
+        image = render_image_upload()
+        form_data = render_form()
+        
+        # Handle form submission
+        if form_data["submitted"] and image is not None:
+            with st.spinner("Analyzing image..."):
+                prediction = predict_image(image)
+                st.session_state.prediction = prediction
+                st.rerun()
+    
+    with col_result:
+        render_result_card(st.session_state.get("prediction", None))
+    
+    render_disclaimer()
 
 # Page config
 st.set_page_config(
@@ -14,6 +166,12 @@ st.set_page_config(
 # Initialize session state
 if "lang" not in st.session_state:
     st.session_state.lang = "en"
+
+if "uploaded_image" not in st.session_state:
+    st.session_state.uploaded_image = None
+if "processed_image" not in st.session_state:
+    st.session_state.processed_image = None
+
 
 def t(key):
     """Helper to get translated string."""
@@ -37,6 +195,7 @@ def render_header():
         )
         st.session_state.lang = "my" if lang == t("lang_my") else "en"
 
+
 def render_form():
     """Render assessment form."""
     st.subheader(f"📋 {t('form_title')}")
@@ -59,7 +218,16 @@ def render_form():
         urgent_support = st.checkbox(t("urgent_support"))
         uploaded_image = st.file_uploader(t("upload_photo"), type=["jpg", "jpeg", "png"])
         
-        submitted = st.form_submit_button(t("assess_button"), use_container_width=True)
+        # Check if an image was uploaded before trying to display it
+        if uploaded_image is not None:
+            try:
+                image = Image.open(uploaded_image)
+                st.image(image, caption=uploaded_file.name, use_container_width=True)
+            except Exception:
+                st.warning("⚠️ Unable to display the uploaded image. File may be corrupted or invalid.")
+
+        # ဖြည့်စွက်လိုက်သည့် Submit Button
+        submitted = st.form_submit_button("Submit Assessment")
     
     return {
         "region": region,
