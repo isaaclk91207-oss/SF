@@ -3,7 +3,7 @@
 STRINGS = {
     # App
     "app_title": "SafeFarm Myanmar",
-    "team_name": "M-Matrix Team",
+    "team_name": "Ei Thazin Htay",
     "tagline": "Flood Damage Assessment for Myanmar Agriculture",
     
     # Language
@@ -68,5 +68,5 @@ STRINGS = {
     "priority_low": "Low Priority",
     
     # Footer
-    "footer_text": "SafeFarm Myanmar © 2026 | Team M-Matrix",
+    "footer_text": "SafeFarm Myanmar © 2026 | Created by Ei Thazin Htay",
 }

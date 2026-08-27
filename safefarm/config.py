@@ -67,3 +67,13 @@ def get_string(key, lang="en"):
     if lang == "my":
         return MY_STRINGS.get(key, EN_STRINGS.get(key, key))
     return EN_STRINGS.get(key, key)
+
+
+def get_all_strings(lang="en"):
+    """Get all localized strings for a language."""
+    from lang.en import STRINGS as EN_STRINGS
+    from lang.my import STRINGS as MY_STRINGS
+    
+    if lang == "my":
+        return MY_STRINGS
+    return EN_STRINGS
