@@ -67,6 +67,12 @@ STRINGS = {
     "priority_medium": "ဦးစားပေးအလယ်အလတ်",
     "priority_low": "ဦးစားပေးနည်း",
     
+    # Report
+    "report_title": "စိုက်ခင်း ထိခိုက်မှု အကဲဖြတ်ချက် အစီရင်ခံစာ",
+    "assessment_details": "အကဲဖြတ်ချက် အသေးစိတ်",
+    "damage_assessment": "ထိခိုက်မှု အကဲဖြတ်ချက်",
+    "recommended_support": "အကြံပြုထားသည့် အကူအညီ",
+    
     # Footer
     "footer_text": "SafeFarm Myanmar © 2026 | M-Matrix အဖွဲ့",
 }

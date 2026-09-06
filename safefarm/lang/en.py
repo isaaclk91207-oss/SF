@@ -67,6 +67,12 @@ STRINGS = {
     "priority_medium": "Medium Priority",
     "priority_low": "Low Priority",
     
+    # Report
+    "report_title": "Farm Damage Assessment Report",
+    "assessment_details": "Assessment Details",
+    "damage_assessment": "Damage Assessment",
+    "recommended_support": "Recommended Support",
+    
     # Footer
     "footer_text": "SafeFarm Myanmar © 2026 | Created by Ei Thazin Htay",
 }

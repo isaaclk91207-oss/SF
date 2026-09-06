@@ -1,12 +1,14 @@
 """SafeFarm Myanmar - Flood Damage Assessment"""
 
+import os
 import streamlit as st
 from PIL import Image
 from config import get_string, REGIONS, CROPS, GROWTH_STAGES, CLASS_COLORS
 from utils.image import validate_image, preprocess_image, get_image_info
 from model.inference import get_classifier, predict_image
 from utils.priority import calculate_priority, get_priority_label, get_recommendations
-from utils.priority import calculate_priority, get_priority_label, get_recommendations
+from utils.report import build_pdf, generate_report_id
+from utils.font import get_myanmar_font_css
 
 # Page config
 st.set_page_config(
@@ -15,6 +17,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Inject Myanmar font CSS for proper rendering
+st.markdown(get_myanmar_font_css(), unsafe_allow_html=True)
 
 # Initialize session state
 if "lang" not in st.session_state:
@@ -240,6 +245,53 @@ def render_result_card(prediction, form_data=None):
         st.markdown("**Recommended Actions:**")
         for rec_key in recs:
             st.markdown(f"- {t(rec_key)}")
+
+        # PDF Download
+        st.markdown("---")
+        report_id = generate_report_id()
+        if st.button(t("download_pdf"), use_container_width=True, key="download_pdf_btn"):
+            with st.spinner("Generating PDF..."):
+                import tempfile
+
+                image_path = None
+                if st.session_state.uploaded_image is not None:
+                    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+                    st.session_state.uploaded_image.save(tmp.name, "PNG")
+                    image_path = tmp.name
+
+                assessment_data = {
+                    "region": form_data.get("region", ""),
+                    "township": form_data.get("township", ""),
+                    "village": form_data.get("village", ""),
+                    "crop_type": form_data.get("crop_type", ""),
+                    "farm_area": form_data.get("farm_area", 0),
+                    "flood_days": form_data.get("flood_days", 0),
+                    "growth_stage": form_data.get("growth_stage", ""),
+                    "damage_level": damage_class,
+                    "confidence": confidence,
+                    "priority_score": score,
+                    "recommendations": recs,
+                    "image_path": image_path,
+                }
+
+                output_path = os.path.join(tempfile.gettempdir(), f"safefarm_report_{report_id}.pdf")
+                build_pdf(assessment_data, output_path, lang=st.session_state.lang)
+
+                with open(output_path, "rb") as f:
+                    pdf_bytes = f.read()
+
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf_bytes,
+                    file_name=f"safefarm_report_{report_id}.pdf",
+                    mime="application/pdf"
+                )
+
+                if image_path and os.path.exists(image_path):
+                    try:
+                        os.remove(image_path)
+                    except PermissionError:
+                        pass
 
     # Grad-CAM
     st.markdown("---")
