@@ -4,7 +4,7 @@
 
 Team: M-Matrix
 
-[![Streamlit App](https://img.shields.io/badge/Streamlit-Deploy-red?logo=streamlit)](https://huggingface.co/spaces)
+[![Streamlit App](https://img.shields.io/badge/Streamlit-Deploy-red?logo=streamlit)](https://share.streamlit.io)
 
 ## Overview
 
@@ -21,16 +21,23 @@ SafeFarm Myanmar is a preliminary flood damage assessment tool for Myanmar farme
 
 ## Quick Start
 
-### Option 1: Streamlit Cloud (Online)
+### Option 1: Streamlit Cloud (Recommended)
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://huggingface.co/spaces)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io)
+
+1. Go to [Streamlit Community Cloud](https://share.streamlit.io)
+2. Sign in with GitHub
+3. Click "New app"
+4. Select this repository
+5. Set main file: `app.py`
+6. Click "Deploy"
 
 ### Option 2: Local Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/safefarm-myanmar.git
-cd safefarm-myanmar
+git clone https://github.com/isaaclk91207-oss/SF.git
+cd SF
 
 # Create virtual environment
 python -m venv venv
@@ -60,29 +67,24 @@ start.bat
 ## Project Structure
 
 ```
-safefarm-myanmar/
-├── app.py                 # Streamlit entry point
-├── requirements.txt       # Python dependencies
+SF/
+├── app.py              # Main Streamlit app
+├── config.py           # App configuration
+├── requirements.txt    # Python dependencies
 ├── .streamlit/
-│   └── config.toml        # Streamlit configuration
-├── safefarm/
-│   ├── config.py          # App configuration
-│   ├── lang/              # Bilingual strings
-│   │   ├── en.py          # English
-│   │   └── my.py          # Myanmar
-│   ├── model/             # ML inference
-│   │   ├── inference.py   # ResNet18 classifier
-│   │   └── gradcam.py     # Grad-CAM visualization
-│   ├── utils/             # Utilities
-│   │   ├── image.py       # Image processing
-│   │   ├── priority.py    # Priority scoring
-│   │   ├── report.py      # PDF generation
-│   │   └── font.py        # Myanmar font handling
-│   └── pwa/               # PWA files
-│       ├── index.html     # PWA wrapper
-│       ├── manifest.json  # PWA manifest
-│       └── sw.js          # Service worker
-└── README.md
+│   └── config.toml     # Streamlit config
+├── lang/               # Bilingual strings
+│   ├── en.py           # English
+│   └── my.py           # Myanmar
+├── model/              # ML inference
+│   ├── inference.py    # ResNet18 classifier
+│   └── gradcam.py      # Grad-CAM visualization
+└── utils/              # Utilities
+    ├── image.py        # Image processing
+    ├── priority.py     # Priority scoring
+    ├── report.py       # PDF generation
+    ├── font.py         # Myanmar font handling
+    └── fonts/          # Font files
 ```
 
 ## How It Works
@@ -103,7 +105,7 @@ safefarm-myanmar/
 ## Technology Stack
 
 - **Frontend**: Streamlit
-- **ML Framework**: PyTorch
+- **ML Framework**: PyTorch (CPU-only)
 - **Model**: ResNet18 (pretrained)
 - **PDF Generation**: xhtml2pdf
 - **Image Processing**: OpenCV, Pillow

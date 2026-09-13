@@ -41,3 +41,9 @@ tmp/
 # Byte-compiled
 __pycache__/
 */__pycache__/
+
+# Old project structure
+safefarm/
+
+# PWA deploy folder
+pwa-deploy/
